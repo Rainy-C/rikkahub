@@ -1,10 +1,8 @@
 name: RikkaHub Build
 
 on:
-  # 手动编译
   workflow_dispatch:
 
-  # master 有新提交就自动编译
   push:
     branches:
       - master
@@ -17,27 +15,18 @@ jobs:
       contents: write
 
     steps:
-      # =========================
-      # 拉取源码
-      # =========================
       - name: Checkout source
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: recursive
 
-      # =========================
-      # Java
-      # =========================
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      # =========================
-      # Web UI 构建环境
-      # =========================
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -54,9 +43,6 @@ jobs:
         working-directory: web-ui
         run: pnpm install --frozen-lockfile
 
-      # =========================
-      # Gradle 缓存
-      # =========================
       - name: Gradle cache
         uses: actions/cache@v4
         with:
@@ -67,38 +53,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # =========================
-      # 准备 Release 签名
-      # =========================
-      - name: Prepare signing files
-        env:
-          KEY_BASE64: ${{ secrets.KEY_BASE64 }}
-          SIGNING_CONFIG: ${{ secrets.SIGNING_CONFIG }}
-        run: |
-          if [ -z "$KEY_BASE64" ]; then
-            echo "❌ KEY_BASE64 Secret 未配置"
-            exit 1
-          fi
-
-          if [ -z "$SIGNING_CONFIG" ]; then
-            echo "❌ SIGNING_CONFIG Secret 未配置"
-            exit 1
-          fi
-
-          printf '%s' "$KEY_BASE64" | base64 --decode > app/app.key
-
-          if [ ! -s app/app.key ]; then
-            echo "❌ app/app.key 解码失败或文件为空"
-            exit 1
-          fi
-
-          printf '%s\n' "$SIGNING_CONFIG" > local.properties
-
-          echo "✅ Release 签名文件准备完成"
-
-      # =========================
-      # 准备 Google Services
-      # =========================
       - name: Prepare google-services.json
         env:
           GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
@@ -113,52 +67,26 @@ jobs:
             > app/google-services.json
 
           if [ ! -s app/google-services.json ]; then
-            echo "❌ google-services.json 解码失败或为空"
+            echo "❌ google-services.json 为空"
             exit 1
           fi
 
-          echo "正在验证 google-services.json..."
+          python3 -m json.tool app/google-services.json > /dev/null
 
-          if ! python3 -m json.tool app/google-services.json > /dev/null; then
-            echo "❌ google-services.json 不是合法 JSON"
-            exit 1
-          fi
+          echo "✅ google-services.json OK"
 
-          echo "✅ google-services.json 合法"
-
-      # =========================
-      # Gradle Build
-      # =========================
       - name: Gradle Build
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --stacktrace
+          ./gradlew assembleDebug --stacktrace
 
-      # =========================
-      # 检查 APK
-      # =========================
       - name: List APK
         run: |
-          echo "======= Build outputs ======="
           find app/build/outputs/apk -type f -name "*.apk" -print
 
-      # =========================
-      # 发布 Nightly Release
-      # =========================
-      - name: Publish nightly prerelease
-        uses: softprops/action-gh-release@v2
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: nightly
-          name: Nightly Build
-          prerelease: true
-          make_latest: false
-
-          body: |
-            自动构建版本
-
-            Commit: `${{ github.sha }}`
-
-            > ⚠️ 开发版本，可能不稳定，仅供测试。
-
-          files: |
-            app/build/outputs/apk/release/*.apk
+          name: RikkaHub-Debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
