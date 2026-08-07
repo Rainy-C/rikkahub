@@ -1,72 +1,62 @@
 name: RikkaHub Build
 
 on:
+  # 手动编译
   workflow_dispatch:
+
+  # master 有新提交就自动编译
   push:
     branches:
       - master
 
 jobs:
-  # 检查过去 24 小时内是否有新提交，没有则跳过构建，避免重复打包
-  check:
-    runs-on: ubuntu-latest
-    outputs:
-      should_build: ${{ steps.check.outputs.should_build }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check for recent commits
-        id: check
-        run: |
-          # 手动触发时无条件构建
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "should_build=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          # 定时触发：仅当过去 24 小时内有新提交才构建
-          if [ -n "$(git log --since='24 hours ago' --oneline)" ]; then
-            echo "should_build=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_build=false" >> "$GITHUB_OUTPUT"
-            echo "过去 24 小时无新提交，跳过构建"
-          fi
-
   build:
-    needs: check
-    if: needs.check.outputs.should_build == 'true'
     runs-on: ubuntu-latest
+
     permissions:
-      contents: write   # 发布 Release 需要写权限
+      contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      # =========================
+      # 拉取源码
+      # =========================
+      - name: Checkout source
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: recursive # 拉取子模块
+          submodules: recursive
 
-      - name: Set up JDK
+      # =========================
+      # Java
+      # =========================
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
-      # web 模块的 preBuild 会执行 `pnpm run build` 构建前端，必须准备好 Node + pnpm
+      # =========================
+      # Web UI 构建环境
+      # =========================
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 11
 
-      - name: Set up Node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
           cache-dependency-path: web-ui/pnpm-lock.yaml
 
-      # gradle 的 buildWebUi 任务只跑 build 不跑 install，需在此提前安装依赖
       - name: Install web-ui dependencies
         working-directory: web-ui
         run: pnpm install --frozen-lockfile
 
+      # =========================
+      # Gradle 缓存
+      # =========================
       - name: Gradle cache
         uses: actions/cache@v4
         with:
@@ -74,33 +64,101 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
-      - name: Prepare build files
+      # =========================
+      # 准备 Release 签名
+      # =========================
+      - name: Prepare signing files
+        env:
+          KEY_BASE64: ${{ secrets.KEY_BASE64 }}
+          SIGNING_CONFIG: ${{ secrets.SIGNING_CONFIG }}
         run: |
-          # 解码base64编码的keystore文件
-          echo "${{ secrets.KEY_BASE64 }}" | base64 -d > app/app.key
+          if [ -z "$KEY_BASE64" ]; then
+            echo "❌ KEY_BASE64 Secret 未配置"
+            exit 1
+          fi
 
-          # 写入签名配置到local.properties
-          echo "${{ secrets.SIGNING_CONFIG }}" > local.properties
+          if [ -z "$SIGNING_CONFIG" ]; then
+            echo "❌ SIGNING_CONFIG Secret 未配置"
+            exit 1
+          fi
 
-          # 写入Google Services配置
-          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+          printf '%s' "$KEY_BASE64" | base64 --decode > app/app.key
 
+          if [ ! -s app/app.key ]; then
+            echo "❌ app/app.key 解码失败或文件为空"
+            exit 1
+          fi
+
+          printf '%s\n' "$SIGNING_CONFIG" > local.properties
+
+          echo "✅ Release 签名文件准备完成"
+
+      # =========================
+      # 准备 Google Services
+      # =========================
+      - name: Prepare google-services.json
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "❌ GOOGLE_SERVICES_JSON_BASE64 Secret 未配置"
+            exit 1
+          fi
+
+          printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" \
+            | base64 --decode \
+            > app/google-services.json
+
+          if [ ! -s app/google-services.json ]; then
+            echo "❌ google-services.json 解码失败或为空"
+            exit 1
+          fi
+
+          echo "正在验证 google-services.json..."
+
+          if ! python3 -m json.tool app/google-services.json > /dev/null; then
+            echo "❌ google-services.json 不是合法 JSON"
+            exit 1
+          fi
+
+          echo "✅ google-services.json 合法"
+
+      # =========================
+      # Gradle Build
+      # =========================
       - name: Gradle Build
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease --stacktrace
 
-      # 把 APK 直接发布为 Prerelease，用户点链接即可下载单个 apk，无需登录、无需解压
+      # =========================
+      # 检查 APK
+      # =========================
+      - name: List APK
+        run: |
+          echo "======= Build outputs ======="
+          find app/build/outputs/apk -type f -name "*.apk" -print
+
+      # =========================
+      # 发布 Nightly Release
+      # =========================
       - name: Publish nightly prerelease
         uses: softprops/action-gh-release@v2
-        if: success()
         with:
-          tag_name: nightly            # 固定 tag，每晚覆盖同一个「最新每日构建」
+          tag_name: nightly
           name: Nightly Build
           prerelease: true
+          make_latest: false
+
           body: |
-            自动每日构建（commit `${{ github.sha }}`）
+            自动构建版本
+
+            Commit: `${{ github.sha }}`
 
             > ⚠️ 开发版本，可能不稳定，仅供测试。
-          files: app/build/outputs/apk/release/*.apk
+
+          files: |
+            app/build/outputs/apk/release/*.apk
