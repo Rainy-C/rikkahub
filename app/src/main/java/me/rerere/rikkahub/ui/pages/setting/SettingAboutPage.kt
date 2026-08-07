@@ -45,7 +45,6 @@ import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.easteregg.EmojiBurstHost
 import me.rerere.rikkahub.ui.components.ui.CardGroup
-import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.utils.openUrl
 import me.rerere.rikkahub.utils.plus
@@ -54,7 +53,6 @@ import me.rerere.rikkahub.utils.plus
 fun SettingAboutPage() {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val context = LocalContext.current
-    val navController = LocalNavController.current
     val emojiOptions = remember {
         listOf(
             "🎉", "✨", "🌟", "💫", "🎊", "🥳", "🎈", "🎆", "🎇", "🧨",
@@ -134,7 +132,7 @@ fun SettingAboutPage() {
                         item(
                             modifier = Modifier.combinedClickable(
                                 onClick = {},
-                                onLongClick = { navController.navigate(Screen.Debug) },
+                                onLongClick = {},
                             ),
                             leadingContent = { Icon(HugeIcons.Code, null) },
                             supportingContent = {
