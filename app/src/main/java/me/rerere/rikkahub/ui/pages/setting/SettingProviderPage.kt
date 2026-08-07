@@ -4,6 +4,7 @@ import android.net.Uri
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.Camera01
 import me.rerere.hugeicons.stroke.DragDropHorizontal
+import me.rerere.hugeicons.stroke.Delete01
 import me.rerere.hugeicons.stroke.Image02
 import me.rerere.hugeicons.stroke.FileImport
 import me.rerere.hugeicons.stroke.Add01
@@ -222,6 +223,10 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
                             },
                             onClick = {
                                 navController.navigate(Screen.SettingProviderDetail(providerId = provider.id.toString()))
+                            },
+                            onDelete = {
+                                val newProviders = settings.providers.filter { it.id != provider.id }
+                                vm.updateSettings(settings.copy(providers = newProviders))
                             }
                         )
                     }
@@ -589,8 +594,10 @@ private fun ProviderItem(
     provider: ProviderSetting,
     modifier: Modifier = Modifier,
     dragHandle: @Composable () -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDelete: () -> Unit,
 ) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
@@ -649,6 +656,33 @@ private fun ProviderItem(
                 }
             }
             dragHandle()
+            IconButton(onClick = { showDeleteDialog = true }) {
+                Icon(
+                    imageVector = HugeIcons.Delete01,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
         }
+    }
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text(stringResource(R.string.delete)) },
+            text = { Text("确定要删除「${provider.name}」吗？") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteDialog = false
+                    onDelete()
+                }) {
+                    Text(stringResource(R.string.confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 }
