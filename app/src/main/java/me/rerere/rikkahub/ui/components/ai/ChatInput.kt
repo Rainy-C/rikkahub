@@ -76,6 +76,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.dokar.sonner.ToastType
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.blur.blurEffect
+import dev.chrisbanes.haze.blur.HazeColorEffect
 import dev.chrisbanes.haze.blur.materials.HazeMaterials
 import dev.chrisbanes.haze.hazeEffect
 import kotlinx.coroutines.CancellationException
@@ -134,7 +135,10 @@ fun ChatInput(
     val toaster = LocalToaster.current
     val assistant = settings.getCurrentAssistant()
     val hazeTintColor = MaterialTheme.colorScheme.surfaceContainerLow
-    val inputHazeStyle = HazeMaterials.thin(containerColor = hazeTintColor)
+    val inputHazeStyle = HazeMaterials.thin(containerColor = hazeTintColor).copy(
+        colorEffects = listOf(HazeColorEffect.tint(hazeTintColor.copy(alpha = 0.4f))),
+        blurRadius = 24.dp,
+    )
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
