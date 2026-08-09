@@ -78,7 +78,7 @@ jobs:
       - name: Gradle Build
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew clean assembleDebug --stacktrace
 
       - name: List APK
         run: |
