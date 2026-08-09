@@ -3,9 +3,7 @@ package me.rerere.rikkahub.ui.pages.assistant
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.Copy01
 import me.rerere.hugeicons.stroke.Add01
-import me.rerere.hugeicons.stroke.Search01
 import me.rerere.hugeicons.stroke.Delete01
-import me.rerere.hugeicons.stroke.Cancel01
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -91,21 +89,17 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
     val navController = LocalNavController.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    // 搜索关键词状态
-    var searchQuery by remember { mutableStateOf("") }
     // 标签过滤状态
     var selectedTagIds by remember { mutableStateOf(emptySet<Uuid>()) }
     // 操作菜单状态
     var actionSheetAssistant by remember { mutableStateOf<Assistant?>(null) }
 
-    // 根据搜索关键词和选中的标签过滤助手
-    val filteredAssistants = remember(settings.assistants, selectedTagIds, searchQuery) {
+    // 根据选中的标签过滤助手
+    val filteredAssistants = remember(settings.assistants, selectedTagIds) {
         settings.assistants.filter { assistant ->
-            val matchesSearch = searchQuery.isBlank() ||
-                assistant.name.contains(searchQuery, ignoreCase = true)
             val matchesTags = selectedTagIds.isEmpty() ||
                 assistant.tags.any { tagId -> tagId in selectedTagIds }
-            matchesSearch && matchesTags
+            matchesTags
         }
     }
 
@@ -142,7 +136,7 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             val lazyListState = rememberLazyListState()
-            val isFiltering = selectedTagIds.isNotEmpty() || searchQuery.isNotBlank()
+            val isFiltering = selectedTagIds.isNotEmpty()
             val reorderableState = rememberReorderableLazyListState(lazyListState) { from, to ->
                 if (!isFiltering) {
                     val newAssistants = settings.assistants.toMutableList().apply {
@@ -152,28 +146,6 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
                 }
             }
             val haptic = LocalHapticFeedback.current
-
-            // 搜索框
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                placeholder = { Text(stringResource(R.string.assistant_page_search_placeholder)) },
-                leadingIcon = {
-                    Icon(HugeIcons.Search01, contentDescription = null)
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotBlank()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(HugeIcons.Cancel01, contentDescription = null)
-                        }
-                    }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp)
-            )
 
             // 标签过滤器
             AssistantTagsFilterRow(

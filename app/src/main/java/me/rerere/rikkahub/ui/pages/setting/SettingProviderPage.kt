@@ -8,9 +8,7 @@ import me.rerere.hugeicons.stroke.Delete01
 import me.rerere.hugeicons.stroke.Image02
 import me.rerere.hugeicons.stroke.FileImport
 import me.rerere.hugeicons.stroke.Add01
-import me.rerere.hugeicons.stroke.Search01
 import me.rerere.hugeicons.stroke.Sparkles
-import me.rerere.hugeicons.stroke.Cancel01
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -29,7 +27,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -95,7 +92,6 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val navController = LocalNavController.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    var searchQuery by remember { mutableStateOf("") }
     val lazyListState = rememberLazyListState()
     val reorderableState = rememberReorderableLazyListState(lazyListState) { from, to ->
         val newProviders = settings.providers.toMutableList().apply {
@@ -104,15 +100,7 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
         vm.updateSettings(settings.copy(providers = newProviders))
     }
 
-    val filteredProviders = remember(settings.providers, searchQuery) {
-        if (searchQuery.isBlank()) {
-            settings.providers
-        } else {
-            settings.providers.filter { provider ->
-                provider.name.contains(searchQuery, ignoreCase = true)
-            }
-        }
-    }
+    val filteredProviders = settings.providers
 
     Scaffold(
         topBar = {
@@ -158,29 +146,6 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
                 .fillMaxSize()
                 .padding(top = innerPadding.calculateTopPadding())
         ) {
-            // Search bar
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text(stringResource(R.string.setting_provider_page_search_providers)) },
-                leadingIcon = {
-                    Icon(HugeIcons.Search01, contentDescription = null)
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(HugeIcons.Cancel01, contentDescription = "Clear")
-                        }
-                    }
-                },
-                singleLine = true,
-                shape = CircleShape,
-            )
-
-
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
