@@ -11,7 +11,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -69,8 +68,6 @@ import me.rerere.ai.provider.Model
 import me.rerere.ai.ui.UIMessage
 import me.rerere.ai.ui.UIMessagePart
 import me.rerere.rikkahub.R
-import me.rerere.rikkahub.data.ai.transformers.DefaultPlaceholderProvider
-import me.rerere.rikkahub.data.ai.transformers.TemplateTransformer
 import me.rerere.rikkahub.data.ai.transformers.TransformerContext
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.model.Assistant
@@ -82,7 +79,6 @@ import me.rerere.rikkahub.ui.components.message.ChatMessage
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.FormItem
 import me.rerere.rikkahub.ui.components.ui.Select
-import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TextArea
 import me.rerere.rikkahub.ui.theme.ChatFontProvider
 import me.rerere.rikkahub.ui.theme.CustomColors
@@ -92,7 +88,6 @@ import me.rerere.rikkahub.utils.insertAtCursor
 import me.rerere.rikkahub.utils.onError
 import me.rerere.rikkahub.utils.onSuccess
 import org.koin.androidx.compose.koinViewModel
-import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import kotlin.uuid.Uuid
 
@@ -140,7 +135,6 @@ private fun AssistantPromptContent(
     onUpdate: (Assistant) -> Unit
 ) {
     val context = LocalContext.current
-    val templateTransformer = koinInject<TemplateTransformer>()
 
     Column(
         modifier = Modifier
@@ -177,28 +171,6 @@ private fun AssistantPromptContent(
                     minLines = 5,
                     maxLines = 10
                 )
-
-                Column {
-                    Text(
-                        text = stringResource(R.string.assistant_page_available_variables),
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                    ) {
-                        DefaultPlaceholderProvider.placeholders.forEach { (k, info) ->
-                            Tag(
-                                onClick = {
-                                    systemPromptValue.insertAtCursor("{{$k}}")
-                                }
-                            ) {
-                                info.displayName()
-                                Text(": {{$k}}")
-                            }
-                        }
-                    }
-                }
             }
         }
 
@@ -254,148 +226,6 @@ private fun AssistantPromptContent(
             )
         }
 
-        Card(
-            colors = CustomColors.cardColorsOnSurfaceContainer
-        ) {
-            FormItem(
-                modifier = Modifier.padding(8.dp),
-                label = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(stringResource(R.string.assistant_page_message_template))
-                        Spacer(Modifier.weight(1f))
-                        IconButton(
-                            onClick = {
-                                onUpdate(assistant.copy(messageTemplate = "{{ message }}"))
-                            },
-                            enabled = assistant.messageTemplate != "{{ message }}",
-                        ) {
-                            Icon(
-                                imageVector = HugeIcons.Refresh03,
-                                contentDescription = null,
-                            )
-                        }
-                    }
-                },
-                content = {
-                    val missingMessage = "{{ message }}" !in assistant.messageTemplate
-                    OutlinedTextField(
-                        value = assistant.messageTemplate,
-                        onValueChange = {
-                            onUpdate(
-                                assistant.copy(
-                                    messageTemplate = it
-                                )
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 5,
-                        maxLines = 15,
-                        isError = missingMessage,
-                        supportingText = if (missingMessage) {
-                            { Text(stringResource(R.string.assistant_page_message_template_missing_message)) }
-                        } else null,
-                        textStyle = LocalTextStyle.current.copy(
-                            fontSize = 12.sp,
-                            fontFamily = JetbrainsMono,
-                            lineHeight = 16.sp
-                        )
-                    )
-                },
-                description = {
-                    Text(stringResource(R.string.assistant_page_message_template_desc))
-                    Text(buildAnnotatedString {
-                        append(stringResource(R.string.assistant_page_template_variables_label))
-                        append(" ")
-                        append(stringResource(R.string.assistant_page_template_variable_role))
-                        append(": ")
-                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-                            append("{{ role }}")
-                        }
-                        append(", ")
-                        append(stringResource(R.string.assistant_page_template_variable_message))
-                        append(": ")
-                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-                            append("{{ message }}")
-                        }
-                        append(", ")
-                        append(stringResource(R.string.assistant_page_template_variable_time))
-                        append(": ")
-                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-                            append("{{ time }}")
-                        }
-                        append(", ")
-                        append(stringResource(R.string.assistant_page_template_variable_date))
-                        append(": ")
-                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-                            append("{{ date }}")
-                        }
-                    })
-                }
-            )
-            Column(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(8.dp)
-                    .fillMaxWidth()
-            ) {
-                Text(
-                    text = stringResource(R.string.assistant_page_template_preview),
-                    style = MaterialTheme.typography.titleSmall
-                )
-                val rawMessages = listOf(
-                    UIMessage.user("你好啊"),
-                    UIMessage.assistant("你好，有什么我可以帮你的吗？"),
-                )
-                val preview by produceState<UiState<List<UIMessage>>>(
-                    UiState.Success(rawMessages),
-                    assistant
-                ) {
-                    value = runCatching {
-                        UiState.Success(
-                            templateTransformer.transform(
-                                ctx = TransformerContext(
-                                    context = context,
-                                    model = Model(modelId = "gpt-4o", displayName = "GPT-4o"),
-                                    assistant = assistant,
-                                    settings = settings
-                                ),
-                                messages = rawMessages
-                            )
-                        )
-                    }.getOrElse {
-                        UiState.Error(it)
-                    }
-                }
-                preview.onError {
-                    Text(
-                        text = it.message ?: it.javaClass.name,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-                preview.onSuccess {
-                    ChatFontProvider(displaySetting = settings.displaySetting) {
-                        it.fastForEach { message ->
-                            ChatMessage(
-                                node = message.toMessageNode(),
-                                onFork = {},
-                                onRegenerate = {},
-                                onEdit = {},
-                                onShare = {},
-                                onDelete = {},
-                                onUpdate = {},
-                                lastMessage = false,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        Card(
             colors = CustomColors.cardColorsOnSurfaceContainer
         ) {
             FormItem(

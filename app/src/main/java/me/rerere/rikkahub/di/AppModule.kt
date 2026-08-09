@@ -77,7 +77,6 @@ val appModule = module {
             conversationRepo = get(),
             memoryRepository = get(),
             generationHandler = get(),
-            templateTransformer = get(),
             providerManager = get(),
             localTools = get(),
             mcpManager = get(),
