@@ -69,11 +69,9 @@ import me.rerere.rikkahub.data.datastore.getCurrentChatModel
 import me.rerere.rikkahub.data.files.FilesManager
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.Conversation
-import me.rerere.rikkahub.data.repository.WorkspaceRepository
 import me.rerere.rikkahub.service.ChatError
 import me.rerere.rikkahub.ui.components.ai.ChatInput
 import me.rerere.rikkahub.ui.components.ai.FilesPicker
-import me.rerere.rikkahub.ui.components.ai.completion.WorkspaceCompletionProvider
 import me.rerere.rikkahub.ui.components.ai.useCropLauncher
 import me.rerere.rikkahub.ui.components.ui.permission.PermissionCamera
 import me.rerere.rikkahub.ui.components.ui.permission.PermissionManager
@@ -276,23 +274,10 @@ private fun ChatPageContent(
 ) {
     val scope = rememberCoroutineScope()
     val toaster = LocalToaster.current
-    val workspaceRepository: WorkspaceRepository = koinInject()
     var previewMode by rememberSaveable { mutableStateOf(false) }
     val hazeState = rememberHazeState()
     val assistant = setting.getCurrentAssistant()
     var showFilesSheet by remember { mutableStateOf(false) }
-
-    val completionProviders = remember(assistant.workspaceId, conversation.workspaceCwd, workspaceRepository) {
-        assistant.workspaceId?.let { workspaceId ->
-            listOf(
-                WorkspaceCompletionProvider(
-                    workspaceId = workspaceId.toString(),
-                    repository = workspaceRepository,
-                    currentCwd = conversation.workspaceCwd,
-                )
-            )
-        }.orEmpty()
-    }
 
     TTSAutoPlay(vm = vm, setting = setting, conversation = conversation)
 
@@ -326,7 +311,6 @@ private fun ChatPageContent(
                     loading = loadingJob != null,
                     settings = setting,
                     hazeState = hazeState,
-                    completionProviders = completionProviders,
                     onCancelClick = {
                         vm.stopGeneration()
                     },

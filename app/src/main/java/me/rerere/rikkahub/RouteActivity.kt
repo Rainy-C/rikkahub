@@ -91,11 +91,6 @@ import me.rerere.rikkahub.ui.pages.extensions.ExtensionsPage
 import me.rerere.rikkahub.ui.pages.extensions.PromptPage
 import me.rerere.rikkahub.ui.pages.extensions.skills.SkillDetailPage
 import me.rerere.rikkahub.ui.pages.extensions.skills.SkillsPage
-import me.rerere.rikkahub.ui.pages.extensions.workspace.WorkspacePage
-import me.rerere.rikkahub.ui.pages.extensions.workspace.WorkspaceDetailPage
-import me.rerere.rikkahub.ui.pages.extensions.workspace.WorkspaceFileEditorPage
-import me.rerere.rikkahub.ui.pages.extensions.workspace.WorkspaceTerminalPage
-import me.rerere.workspace.WorkspaceStorageArea
 import me.rerere.rikkahub.ui.pages.favorite.FavoritePage
 import me.rerere.rikkahub.ui.pages.history.HistoryPage
 import me.rerere.rikkahub.ui.pages.search.SearchPage
@@ -463,26 +458,6 @@ class RouteActivity : ComponentActivity() {
                                 SkillsPage()
                             }
 
-                            entry<Screen.Workspaces> {
-                                WorkspacePage()
-                            }
-
-                            entry<Screen.WorkspaceDetail> { key ->
-                                WorkspaceDetailPage(key.id)
-                            }
-
-                            entry<Screen.WorkspaceTerminal> { key ->
-                                WorkspaceTerminalPage(key.id)
-                            }
-
-                            entry<Screen.WorkspaceFileEditor> { key ->
-                                WorkspaceFileEditorPage(
-                                    id = key.id,
-                                    area = WorkspaceStorageArea.valueOf(key.area),
-                                    path = key.path,
-                                )
-                            }
-
                             entry<Screen.SkillDetail> { key ->
                                 SkillDetailPage(skillName = key.skillName)
                             }
@@ -651,18 +626,6 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object Skills : Screen
-
-    @Serializable
-    data object Workspaces : Screen
-
-    @Serializable
-    data class WorkspaceDetail(val id: String) : Screen
-
-    @Serializable
-    data class WorkspaceTerminal(val id: String) : Screen
-
-    @Serializable
-    data class WorkspaceFileEditor(val id: String, val area: String, val path: String) : Screen
 
     @Serializable
     data class SkillDetail(val skillName: String) : Screen

@@ -13,7 +13,6 @@ import me.rerere.rikkahub.data.db.dao.GenMediaDAO
 import me.rerere.rikkahub.data.db.dao.ManagedFileDAO
 import me.rerere.rikkahub.data.db.dao.MemoryDAO
 import me.rerere.rikkahub.data.db.dao.MessageNodeDAO
-import me.rerere.rikkahub.data.db.dao.WorkspaceDAO
 import me.rerere.rikkahub.data.db.entity.ConversationEntity
 import me.rerere.rikkahub.data.db.entity.FavoriteEntity
 import me.rerere.rikkahub.data.db.entity.FolderEntity
@@ -21,7 +20,6 @@ import me.rerere.rikkahub.data.db.entity.GenMediaEntity
 import me.rerere.rikkahub.data.db.entity.ManagedFileEntity
 import me.rerere.rikkahub.data.db.entity.MemoryEntity
 import me.rerere.rikkahub.data.db.entity.MessageNodeEntity
-import me.rerere.rikkahub.data.db.entity.WorkspaceEntity
 import me.rerere.rikkahub.data.db.migrations.Migration_16_17
 import me.rerere.rikkahub.data.db.migrations.Migration_22_23
 import me.rerere.rikkahub.data.db.migrations.Migration_8_9
@@ -35,7 +33,6 @@ import me.rerere.rikkahub.utils.JsonInstant
         MessageNodeEntity::class,
         ManagedFileEntity::class,
         FavoriteEntity::class,
-        WorkspaceEntity::class,
         FolderEntity::class,
     ],
     version = 24,
@@ -74,7 +71,6 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun favoriteDao(): FavoriteDAO
 
-    abstract fun workspaceDao(): WorkspaceDAO
 
     abstract fun folderDao(): FolderDAO
 }

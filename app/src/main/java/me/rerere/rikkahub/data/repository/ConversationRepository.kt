@@ -360,7 +360,6 @@ class ConversationRepository(
             customSystemPrompt = conversation.customSystemPrompt ?: "",
             modeInjectionIds = JsonInstant.encodeToString(conversation.modeInjectionIds),
             lorebookIds = JsonInstant.encodeToString(conversation.lorebookIds),
-            workspaceCwd = conversation.workspaceCwd ?: "",
             folderId = conversation.folderId?.toString() ?: "",
         )
     }
@@ -381,7 +380,6 @@ class ConversationRepository(
             customSystemPrompt = conversationEntity.customSystemPrompt.ifEmpty { null },
             modeInjectionIds = JsonInstant.decodeFromString(conversationEntity.modeInjectionIds),
             lorebookIds = JsonInstant.decodeFromString(conversationEntity.lorebookIds),
-            workspaceCwd = conversationEntity.workspaceCwd.ifEmpty { null },
             folderId = conversationEntity.folderId.ifEmpty { null }?.let { Uuid.parse(it) },
         )
     }

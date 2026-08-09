@@ -50,7 +50,6 @@ import me.rerere.rikkahub.data.ai.tools.createConversationTools
 import me.rerere.rikkahub.data.ai.tools.local.LocalTools
 import me.rerere.rikkahub.data.ai.tools.createSearchTools
 import me.rerere.rikkahub.data.ai.tools.createSkillTools
-import me.rerere.rikkahub.data.ai.tools.createWorkspaceTools
 import me.rerere.rikkahub.data.files.SkillManager
 import me.rerere.rikkahub.data.ai.transformers.Base64ImageToLocalFileTransformer
 import me.rerere.rikkahub.data.ai.transformers.DocumentAsPromptTransformer
@@ -58,7 +57,6 @@ import me.rerere.rikkahub.data.ai.transformers.OcrTransformer
 import me.rerere.rikkahub.data.ai.transformers.PromptInjectionTransformer
 import me.rerere.rikkahub.data.ai.transformers.ThinkTagTransformer
 import me.rerere.rikkahub.data.ai.transformers.TimeReminderTransformer
-import me.rerere.rikkahub.data.ai.transformers.WorkspaceReminderTransformer
 import me.rerere.rikkahub.data.event.AppEvent
 import me.rerere.rikkahub.data.event.AppEventBus
 import me.rerere.rikkahub.data.datastore.SettingsStore
@@ -74,11 +72,9 @@ import me.rerere.rikkahub.data.model.toMessageNode
 import me.rerere.rikkahub.data.repository.ConversationRepository
 import me.rerere.rikkahub.data.repository.FolderRepository
 import me.rerere.rikkahub.data.repository.MemoryRepository
-import me.rerere.rikkahub.data.repository.WorkspaceRepository
 import me.rerere.rikkahub.web.BadRequestException
 import me.rerere.rikkahub.web.NotFoundException
 import me.rerere.rikkahub.utils.applyPlaceholders
-import me.rerere.workspace.WorkspaceShellStatus
 import java.time.Instant
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
@@ -138,12 +134,8 @@ class ChatService(
     val mcpManager: McpManager,
     private val filesManager: FilesManager,
     private val skillManager: SkillManager,
-    private val workspaceRepository: WorkspaceRepository,
     private val folderRepository: FolderRepository,
 ) {
-    // workspace 系统提示注入 (依赖 workspaceRepository, 故在类内构造)
-    private val workspaceReminderTransformer = WorkspaceReminderTransformer(workspaceRepository)
-
     // 统一会话管理
     private val sessions = ConcurrentHashMap<Uuid, ConversationSession>()
     private val _sessionsVersion = MutableStateFlow(0L)
@@ -505,7 +497,6 @@ class ChatService(
                 conversationSystemPrompt = conversation.customSystemPrompt,
                 conversationModeInjectionIds = conversation.modeInjectionIds,
                 conversationLorebookIds = conversation.lorebookIds,
-                workspaceCwd = conversation.workspaceCwd,
                 memories = if (assistant.useGlobalMemory) {
                     memoryRepository.getGlobalMemories()
                 } else {
@@ -513,7 +504,6 @@ class ChatService(
                 },
                 inputTransformers = buildList {
                     addAll(inputTransformers)
-                    add(workspaceReminderTransformer)
                 },
                 outputTransformers = outputTransformers,
                 tools = buildList {
@@ -524,7 +514,6 @@ class ChatService(
                     if (assistant.enableRecentChatsReference) {
                         addAll(createConversationTools(conversationRepo, assistant.id))
                     }
-                    addAll(createWorkspaceToolsIfReady(assistant.workspaceId?.toString(), conversation.workspaceCwd))
                     if (assistant.enabledSkills.isNotEmpty()) {
                         addAll(
                             createSkillTools(
@@ -619,19 +608,6 @@ class ChatService(
                 generateSuggestion(conversationId, finalConversation)
             }
         }
-    }
-
-    private suspend fun createWorkspaceToolsIfReady(workspaceId: String?, cwd: String? = null): List<Tool> {
-        if (workspaceId.isNullOrBlank()) return emptyList()
-        val workspace = workspaceRepository.getById(workspaceId) ?: return emptyList()
-        if (workspace.shellStatus != WorkspaceShellStatus.READY.name) {
-            Log.d(
-                TAG,
-                "createWorkspaceToolsIfReady: skip workspace tools, workspace=$workspaceId, status=${workspace.shellStatus}"
-            )
-            return emptyList()
-        }
-        return createWorkspaceTools(workspaceId, workspaceRepository, cwd)
     }
 
     // ---- 检查无效消息 ----

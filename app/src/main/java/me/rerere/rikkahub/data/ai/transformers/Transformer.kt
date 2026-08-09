@@ -16,7 +16,6 @@ class TransformerContext(
     val conversationModeInjectionIds: Set<Uuid> = emptySet(),
     val conversationLorebookIds: Set<Uuid> = emptySet(),
     val processingStatus: MutableStateFlow<String?> = MutableStateFlow(null),
-    val workspaceCwd: String? = null,
 )
 
 interface MessageTransformer {
@@ -70,7 +69,6 @@ suspend fun List<UIMessage>.transforms(
     conversationModeInjectionIds: Set<Uuid> = emptySet(),
     conversationLorebookIds: Set<Uuid> = emptySet(),
     processingStatus: MutableStateFlow<String?> = MutableStateFlow(null),
-    workspaceCwd: String? = null,
 ): List<UIMessage> {
     val ctx = TransformerContext(
         context = context,
@@ -80,7 +78,6 @@ suspend fun List<UIMessage>.transforms(
         conversationModeInjectionIds = conversationModeInjectionIds,
         conversationLorebookIds = conversationLorebookIds,
         processingStatus = processingStatus,
-        workspaceCwd = workspaceCwd,
     )
     return transformers.fold(this) { acc, transformer ->
         transformer.transform(ctx, acc)

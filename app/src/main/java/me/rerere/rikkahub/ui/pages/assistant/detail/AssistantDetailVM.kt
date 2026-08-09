@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.datastore.SettingsStore
-import me.rerere.rikkahub.data.db.entity.WorkspaceEntity
 import me.rerere.rikkahub.data.files.FilesManager
 import me.rerere.rikkahub.data.files.SkillManager
 import me.rerere.rikkahub.data.files.SkillMetadata
@@ -24,7 +23,6 @@ import me.rerere.rikkahub.data.model.AssistantMemory
 import me.rerere.rikkahub.data.model.Avatar
 import me.rerere.rikkahub.data.model.Tag
 import me.rerere.rikkahub.data.repository.MemoryRepository
-import me.rerere.rikkahub.data.repository.WorkspaceRepository
 import kotlin.uuid.Uuid
 
 private const val TAG = "AssistantDetailVM"
@@ -35,7 +33,6 @@ class AssistantDetailVM(
     private val memoryRepository: MemoryRepository,
     private val filesManager: FilesManager,
     private val skillManager: SkillManager,
-    private val workspaceRepository: WorkspaceRepository,
 ) : ViewModel() {
     private val assistantId = Uuid.parse(id)
 
@@ -93,15 +90,6 @@ class AssistantDetailVM(
         }.stateIn(
             scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = emptyList()
         )
-
-    val workspaces: StateFlow<List<WorkspaceEntity>> = workspaceRepository
-        .listFlow()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = emptyList(),
-        )
-
     fun updateTags(tagIds: List<Uuid>, tags: List<Tag>) {
         viewModelScope.launch {
             val settings = settings.value
