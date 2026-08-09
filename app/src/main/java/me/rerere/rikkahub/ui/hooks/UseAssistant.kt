@@ -24,7 +24,7 @@ class AssistantState(
     private val onUpdateSettings: (Settings) -> Unit
 ) {
     private var _currentAssistant by mutableStateOf(
-        settings.getCurrentAssistant()
+        settings.getCurrentAssistant() ?: Assistant()
     )
     val currentAssistant get() = _currentAssistant
 

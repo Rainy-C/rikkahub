@@ -104,7 +104,7 @@ class ChatVM(
 
     // 网络搜索(每个助手独立)
     val enableWebSearch = settings.map {
-        it.getCurrentAssistant().enableWebSearch
+        it.getCurrentAssistant()?.enableWebSearch
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     // 当前模型

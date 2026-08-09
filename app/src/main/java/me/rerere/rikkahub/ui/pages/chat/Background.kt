@@ -1,4 +1,5 @@
 package me.rerere.rikkahub.ui.pages.chat
+import me.rerere.rikkahub.data.model.Assistant
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -15,7 +16,7 @@ import me.rerere.rikkahub.data.datastore.getCurrentAssistant
 
 @Composable
 fun AssistantBackground(setting: Settings, modifier: Modifier) {
-    val assistant = setting.getCurrentAssistant()
+    val assistant = setting.getCurrentAssistant() ?: Assistant()
     if (assistant.useGradientBackground) {
         MeshGradientBackground(modifier = modifier)
         return

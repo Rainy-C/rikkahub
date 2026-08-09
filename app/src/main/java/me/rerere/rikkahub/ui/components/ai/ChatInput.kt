@@ -131,7 +131,7 @@ fun ChatInput(
     onLongSendClick: () -> Unit,
 ) {
     val toaster = LocalToaster.current
-    val assistant = settings.getCurrentAssistant()
+    val assistant = settings.getCurrentAssistant() ?: Assistant()
     val hazeTintColor = MaterialTheme.colorScheme.surfaceContainerLow
     val inputHazeStyle = HazeMaterials.thin(containerColor = hazeTintColor).copy(
         backgroundColor = Color.Transparent,
@@ -413,7 +413,7 @@ private fun TextInputRow(
 ) {
     val settings = LocalSettings.current
     val filesManager: FilesManager = koinInject()
-    val assistant = settings.getCurrentAssistant()
+    val assistant = settings.getCurrentAssistant() ?: Assistant()
 
     Column(
         modifier = Modifier.fillMaxWidth(),

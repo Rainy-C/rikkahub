@@ -182,7 +182,7 @@ class ChatService(
                 id = id,
                 initial = Conversation.ofId(
                     id = id,
-                    assistantId = settings.getCurrentAssistant().id
+                    assistantId = settings.getCurrentAssistant()?.id ?: Uuid.random()
                 ),
                 scope = appScope,
                 onIdle = { removeSession(it) }
@@ -270,7 +270,7 @@ class ChatService(
         } else {
             // 新建对话, 并添加预设消息
             val currentSettings = settingsStore.settingsFlowRaw.first()
-            val assistant = currentSettings.getCurrentAssistant()
+            val assistant = currentSettings.getCurrentAssistant() ?: Assistant()
             val newConversation = Conversation.ofId(
                 id = conversationId,
                 assistantId = assistant.id,
@@ -297,7 +297,7 @@ class ChatService(
                 val currentConversation = session.state.value
                 val settings = settingsStore.settingsFlow.first()
                 val assistant = settings.getAssistantById(currentConversation.assistantId)
-                    ?: settings.getCurrentAssistant()
+                    ?: settings.getCurrentAssistant() ?: Assistant()
                 val processedContent = preprocessUserInputParts(content, assistant)
 
                 // 添加消息到列表
@@ -451,7 +451,7 @@ class ChatService(
         val settings = settingsStore.settingsFlow.first()
         val initialConversation = getConversationFlow(conversationId).value
         val assistant = settings.getAssistantById(initialConversation.assistantId)
-            ?: settings.getCurrentAssistant()
+            ?: settings.getCurrentAssistant() ?: Assistant()
         val model = settings.findModelById(assistant.chatModelId ?: settings.chatModelId) ?: return
 
         val senderName = if (assistant.useAssistantAvatar) {
@@ -1031,7 +1031,7 @@ class ChatService(
         val currentConversation = getConversationFlow(conversationId).value
         val settings = settingsStore.settingsFlow.first()
         val assistant = settings.getAssistantById(currentConversation.assistantId)
-            ?: settings.getCurrentAssistant()
+            ?: settings.getCurrentAssistant() ?: Assistant()
         val processedParts = preprocessUserInputParts(parts, assistant)
         var edited = false
 

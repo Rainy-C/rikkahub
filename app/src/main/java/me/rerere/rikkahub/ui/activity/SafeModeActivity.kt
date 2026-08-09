@@ -98,7 +98,7 @@ class SafeModeActivity : ComponentActivity() {
                         Text(
                             text = stringResource(
                                 R.string.safe_mode_current_assistant,
-                                settings.getCurrentAssistant().name.ifEmpty { stringResource(R.string.safe_mode_default_assistant) }),
+                                settings.getCurrentAssistant()?.name?.ifEmpty { stringResource(R.string.safe_mode_default_assistant) } ?: stringResource(R.string.safe_mode_default_assistant)),
                             style = MaterialTheme.typography.bodyLarge,
                         )
 

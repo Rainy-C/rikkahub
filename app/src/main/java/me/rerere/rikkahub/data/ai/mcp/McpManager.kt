@@ -1,4 +1,5 @@
 package me.rerere.rikkahub.data.ai.mcp
+import me.rerere.rikkahub.data.model.Assistant
 
 import android.content.Context
 import androidx.core.net.toUri
@@ -98,7 +99,7 @@ class McpManager(
 
     fun getAllAvailableTools(): List<Triple<Uuid, String, McpTool>> {
         val settings = settingsStore.settingsFlow.value
-        val assistant = settings.getCurrentAssistant()
+        val assistant = settings.getCurrentAssistant() ?: Assistant()
         return settings.mcpServers
             .filter { it.commonOptions.enable && it.id in assistant.mcpServers }
             .flatMap { server ->

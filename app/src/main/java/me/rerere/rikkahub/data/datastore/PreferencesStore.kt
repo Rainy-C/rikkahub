@@ -634,11 +634,11 @@ fun List<ProviderSetting>.findModelById(uuid: Uuid): Model? {
 }
 
 fun Settings.getCurrentChatModel(): Model? {
-    return findModelById(this.getCurrentAssistant().chatModelId ?: this.chatModelId)
+    return findModelById(this.getCurrentAssistant()?.chatModelId ?: this.chatModelId)
 }
 
-fun Settings.getCurrentAssistant(): Assistant {
-    return this.assistants.find { it.id == assistantId } ?: this.assistants.first()
+fun Settings.getCurrentAssistant(): Assistant? {
+    return this.assistants.find { it.id == assistantId } ?: this.assistants.firstOrNull()
 }
 
 fun Settings.getAssistantById(id: Uuid): Assistant? {

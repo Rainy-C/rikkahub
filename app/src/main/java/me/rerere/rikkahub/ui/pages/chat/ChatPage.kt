@@ -276,7 +276,7 @@ private fun ChatPageContent(
     val toaster = LocalToaster.current
     var previewMode by rememberSaveable { mutableStateOf(false) }
     val hazeState = rememberHazeState()
-    val assistant = setting.getCurrentAssistant()
+    val assistant = setting.getCurrentAssistant() ?: Assistant()
     var showFilesSheet by remember { mutableStateOf(false) }
 
     TTSAutoPlay(vm = vm, setting = setting, conversation = conversation)
@@ -316,7 +316,7 @@ private fun ChatPageContent(
                     },
                     enableSearch = enableWebSearch,
                     onToggleSearch = {
-                        val current = setting.getCurrentAssistant()
+                        val current = setting.getCurrentAssistant() ?: Assistant()
                         vm.updateSettings(
                             setting.copy(
                                 assistants = setting.assistants.map { assistant ->
@@ -362,7 +362,7 @@ private fun ChatPageContent(
                         inputState.clearInput()
                     },
                     onUpdateChatModel = {
-                        vm.setChatModel(assistant = setting.getCurrentAssistant(), model = it)
+                        vm.setChatModel(assistant = setting.getCurrentAssistant() ?: Assistant(), model = it)
                     },
                     onUpdateAssistant = {
                         vm.updateSettings(
@@ -729,7 +729,7 @@ private fun TopBar(
                 color = Color.Transparent,
             ) {
                 Column {
-                    val assistant = settings.getCurrentAssistant()
+                    val assistant = settings.getCurrentAssistant() ?: Assistant()
                     val model = settings.getCurrentChatModel()
                     val provider = model?.findProvider(providers = settings.providers, checkOverwrite = false)
                     Text(
