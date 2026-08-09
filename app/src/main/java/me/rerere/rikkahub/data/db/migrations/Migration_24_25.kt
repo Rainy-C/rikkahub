@@ -5,5 +5,5 @@ import androidx.room.DeleteTable
 import androidx.room.migration.AutoMigrationSpec
 
 @DeleteTable(tableName = "workspaces")
-@DeleteColumn(tableName = "conversations", columnName = "workspace_cwd")
+@DeleteColumn(tableName = "ConversationEntity", columnName = "workspace_cwd")
 class Migration_24_25 : AutoMigrationSpec
