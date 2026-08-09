@@ -28,7 +28,6 @@ data class Assistant(
     val useGlobalMemory: Boolean = false, // 使用全局共享记忆而非助手隔离记忆
     val enableRecentChatsReference: Boolean = false,
     val presetMessages: List<UIMessage> = emptyList(),
-    val quickMessageIds: Set<Uuid> = emptySet(),
     val reasoningLevel: ReasoningLevel = ReasoningLevel.AUTO,
     val maxTokens: Int? = null,
     val customHeaders: List<CustomHeader> = emptyList(),
@@ -46,13 +45,6 @@ data class Assistant(
     val enableTimeReminder: Boolean = false,            // 时间间隔提醒注入
     val allowConversationSystemPrompt: Boolean = false, // 允许对话单独重写 system prompt
     val allowConversationPromptInjection: Boolean = false, // 允许对话单独绑定提示词注入
-)
-
-@Serializable
-data class QuickMessage(
-    val id: Uuid = Uuid.random(),
-    val title: String = "",
-    val content: String = "",
 )
 
 @Serializable
