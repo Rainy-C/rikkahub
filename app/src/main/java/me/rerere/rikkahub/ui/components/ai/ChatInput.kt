@@ -137,7 +137,7 @@ fun ChatInput(
     val hazeTintColor = MaterialTheme.colorScheme.surfaceContainerLow
     val inputHazeStyle = HazeMaterials.thin(containerColor = hazeTintColor).copy(
         backgroundColor = Color.Transparent,
-        colorEffects = listOf(HazeColorEffect.tint(hazeTintColor.copy(alpha = 0.2f))),
+        colorEffects = listOf(HazeColorEffect.tint(hazeTintColor.copy(alpha = 0.05f))),
         blurRadius = 24.dp,
     )
 
